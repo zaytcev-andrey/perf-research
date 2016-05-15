@@ -42,6 +42,7 @@ public:
 
 			rep.file_data.reserve( file_entry.disk_file_size );
 			std::copy( begin, end, std::back_inserter( rep.file_data ) );
+			rep.header.file_size = rep.file_data.size();
 		}
 	}
 

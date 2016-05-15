@@ -355,9 +355,11 @@ public:
 
 	fake_file_provider(
 		const std::string& file_name
-		, const std::string& test_file_text )
+		, const std::string& test_file_text
+		, size_t file_string_count )
 		: file_name_( file_name )
 		, test_file_text_( test_file_text )
+		, file_string_count_( file_string_count  )
 	{
 	}
 
@@ -366,17 +368,28 @@ public:
 		using namespace perf::filelogic;
 
 		const std::string ws( "\n" );
-		size_t count = 1024;
 
 		boost::shared_ptr< std::stringstream > stream_ptr( new std::stringstream() );
 		std::stringstream& sstream = *stream_ptr;
+		std::stringstream cache;
+		cache << std::noskipws;
+
 		size_t bytes_count = 0;
+		size_t count = file_string_count_;
+
 		while ( count-- )
 		{
 			sstream << test_file_text_ << ws;
+			cache << test_file_text_ << ws;
 			bytes_count += test_file_text_.length();
 			bytes_count += ws.length();
 		}
+
+		data_cache_.clear();
+		std::istream_iterator< char > begin( cache );
+		std::istream_iterator< char > end;
+		data_cache_.reserve( bytes_count );
+		std::copy( begin, end, std::back_inserter( data_cache_ ) );
 
 		file_stream_info info = {
 			file_name_
@@ -386,13 +399,20 @@ public:
 		return info;
 	}
 
+	const std::vector< char >& get_file_data() const
+	{
+		return data_cache_;
+	}
+
 private:
 
 	const std::string file_name_;
 	const std::string test_file_text_;
+	const size_t file_string_count_;
+	mutable std::vector< char > data_cache_;
 };
 
-TEST( filelogic_test, make_reply )
+TEST( request_handler_test, make_reply )
 {
 	namespace fs = boost::filesystem;
 	using namespace perf::filelogic;
@@ -400,8 +420,9 @@ TEST( filelogic_test, make_reply )
 
 	const std::string file_name( "nonexisting_test_file_name" );
 	const std::string test_file_text( "test file string text" );
+	const size_t file_string_count = 1024;
 
-	fake_file_provider provider( file_name, test_file_text );
+	fake_file_provider provider( file_name, test_file_text, file_string_count );
 
 	request_handler< fake_file_provider > handler( provider );
 
@@ -409,6 +430,14 @@ TEST( filelogic_test, make_reply )
 	req.method = "GET";
 	reply rep;
 	handler.make_reply( req, rep );
+
+	EXPECT_STREQ( rep.header.file_name.c_str(), file_name.c_str() );
+
+	const std::vector< char >& file_data = provider.get_file_data();
+	EXPECT_EQ( file_data.size(), rep.header.file_size );
+	EXPECT_TRUE( std::equal(
+		rep.file_data.begin(), rep.file_data.end()
+		, file_data.begin() ) );
 }
 
 /*{
