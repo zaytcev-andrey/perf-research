@@ -440,6 +440,56 @@ TEST( request_handler_test, make_reply )
 		, file_data.begin() ) );
 }
 
+TEST( receive_logic_test, overall_functionality )
+{
+	namespace fs = boost::filesystem;
+	using namespace perf::filelogic;
+	using namespace perf::protocol;
+
+	// receive and deserialize header
+
+	variable_record var_rec;
+	std::string ch_data( "MSGN   3GET" );
+
+	char* header_buff = var_rec.get_header_buff();
+	const std::string& header = ch_data.substr(
+		0, variable_record::header_length );
+	std::copy( header.begin(), header.end(), header_buff );
+	bool res = var_rec.deserialize_header();
+	EXPECT_TRUE( res );
+
+	// receive body and deserialize body - request
+
+	const std::string& body = ch_data.substr(
+		variable_record::header_length
+		, var_rec.get_body_length() );
+	char* body_buff = var_rec.get_body_buff();
+	std::copy( body.begin(), body.end(), body_buff );
+
+	request req;
+	res = var_rec.deserialize_body( req );
+	EXPECT_TRUE( res );
+
+	EXPECT_STREQ( req.method.c_str(), "GET" );
+
+	// process request and get reply
+
+	const std::string file_name( "nonexisting_test_file_name" );
+	const std::string test_file_text( "test file string text" );
+	const size_t file_string_count = 1024;
+
+	fake_file_provider provider( file_name, test_file_text, file_string_count );
+
+	request_handler< fake_file_provider > handler( provider );
+
+	reply rep;
+	handler.make_reply( req, rep );
+
+	// ready to send reply
+
+	boost::asio::buffer( rep.get_buffers() );
+}
+
 /*{
 	using namespace perf::protocol;
 

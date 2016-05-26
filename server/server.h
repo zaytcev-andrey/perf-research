@@ -1,15 +1,19 @@
 #ifndef PERF_SERVER_H_
 #define PERF_SERVER_H_
 
+#include "connection.h"
+#include "file_provider.h"
+#include "request_handler.h"
+
+#include <iostream>
+
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
-#include <boost/thread/thread.hpp>
-
-#include <iostream>
-
-#include "connection.h"
+#include <boost/thread.hpp>
+#include <boost/thread/future.hpp>
+#include <boost/filesystem.hpp>
 
 namespace perf
 {
@@ -19,12 +23,24 @@ class server
 public:
 	server(
 		const boost::asio::ip::tcp::endpoint& endpoint
-		, unsigned int threads_count = boost::thread::hardware_concurrency() * 2 )
+		, const boost::filesystem::path& file_dir
+		, unsigned int threads_count = /*boost::thread::hardware_concurrency() * 2*/1)
 		: io_service_()
 		, acceptor_( io_service_ )
 		, threads_count_( threads_count )
 		, signals_( io_service_ )
+		, file_provider_( file_dir )
+		, request_handler_( file_provider_ )
 	{
+		boost::packaged_task< void > pt(
+			boost::bind( &filelogic::file_provider::attach, &file_provider_ ) );
+
+		boost::unique_future< void > attach_to_dir(
+			boost::move< boost::unique_future< void > >( pt.get_future() ) );
+
+		boost::thread task( boost::move( pt ) );
+		task.detach();
+
 		// system signals
 		signals_.add(SIGINT);
 		signals_.add(SIGTERM);
@@ -36,6 +52,8 @@ public:
 		acceptor_.set_option( boost::asio::ip::tcp::acceptor::reuse_address( true ) );
 		acceptor_.bind( endpoint );
 		acceptor_.listen();
+
+		attach_to_dir.wait();
 
 		// accepting
 		start_accept();
@@ -58,8 +76,9 @@ private:
 	{
 		std::cout << "start accept new client" << std::endl;
 
-		connection::ptr new_connection( new connection(
-			io_service_ ) );
+		connection< protocol::request_handler< filelogic::file_provider > >::ptr new_connection(
+			new connection< protocol::request_handler< filelogic::file_provider > >( io_service_, request_handler_ ) );
+
 		acceptor_.async_accept(
 			new_connection->connected_socket(),
 			boost::bind( &server::handle_accept, this
@@ -67,7 +86,7 @@ private:
 			, boost::asio::placeholders::error ) );
 	}
 
-	void handle_accept( connection::ptr new_connection
+	void handle_accept( connection< protocol::request_handler< filelogic::file_provider > >::ptr new_connection
 		, const boost::system::error_code& error )
 	{
 		if ( !error )
@@ -91,6 +110,8 @@ private:
 	unsigned int threads_count_;
 	boost::thread_group threads_;
 	boost::asio::signal_set signals_;
+	filelogic::file_provider file_provider_;
+	protocol::request_handler< filelogic::file_provider > request_handler_;
 };
 
 }
