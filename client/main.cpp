@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 
 #include "program_options.h"
+#include "client.h"
 
 int main( int argc, char* argv[] )
 try
@@ -14,6 +15,9 @@ try
 	boost::asio::ip::tcp::endpoint endpoint(
 		options.get_ip_appdress()
 		, options.get_port() );
+
+	perf::client client( endpoint );
+	client.run();
 
 	return 0;
 }
