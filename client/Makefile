@@ -12,17 +12,7 @@ all: main.cpp
 	-lboost_thread \
 	-lboost_random \
 	-lboost_program_options \
-	-o perf-server.exe
-	
-tests: main_test.cpp
-	$(CC) $(OPT) main_test.cpp \
-	-lpthread \
-	-lboost_system \
-	-lboost_filesystem \
-	-lboost_random \
-	-lboost_thread \
-	-lgtest \
-	-o perf-server-tests.exe
+	-o perf-client.exe
 	
 clean:
 	rm -rf *.o *~ *.exe
