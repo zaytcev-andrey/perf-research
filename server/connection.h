@@ -17,22 +17,70 @@
 namespace perf
 {
 
-template< class request_handler >
+namespace detail
+{
+
+// should be decorator
+template< class observer >
+class raii_observer_holder
+{
+public:
+	raii_observer_holder( observer& obs )
+		: checkined_( false )
+		, observer_( obs )
+	{
+	}
+
+	void checkin()
+	{
+		observer_.checkin();
+		checkined_ = true;
+	}
+
+	void checkout()
+	{
+		observer_.checkout();
+		checkined_ = false;
+	}
+
+	void update_sent_data( size_t size )
+	{
+		observer_.update_sent_data( size );
+	}
+
+	~raii_observer_holder()
+	{
+		if ( checkined_ )
+		{
+			observer_.checkout();
+		}
+	}
+
+private:
+	bool checkined_;
+	observer& observer_;
+};
+
+}
+
+template< class request_handler, class observer >
 class connection
-	: public boost::enable_shared_from_this< connection< request_handler > >
+	: public boost::enable_shared_from_this< connection< request_handler, observer > >
 	, private boost::noncopyable
 {
 public:
-	typedef boost::shared_ptr< connection< request_handler > > ptr;
+	typedef boost::shared_ptr< connection< request_handler, observer > > ptr;
 
 public:
 	connection(
 		boost::asio::io_service& io_service
-		, const request_handler& req_handler )
+		, const request_handler& req_handler
+		, observer& observ )
 		: connected_socket_( io_service )
 		, read_buffer_( buffer_len )
 		, write_buffer_( buffer_len )
 		, request_handler_( req_handler )
+		, observer_( observ )
 	{
 		std::cout << "connection constructed" << std::endl;
 	}
@@ -44,12 +92,15 @@ public:
 
 	void start()
 	{
+		observer_.checkin();
+
 		do_read();
 	}
 
 	void stop()
 	{
 		connected_socket_.close();
+		observer_.checkout();
 		std::cout << "connection stopped" << std::endl;
 	}
 
@@ -124,6 +175,7 @@ private:
 			connected_socket_.shutdown(
 				boost::asio::ip::tcp::socket::shutdown_both
 				, non_err_code );*/
+			observer_.update_sent_data( reply_.header.file_size );
 			do_read();
 		}
 		else if ( err != boost::asio::error::operation_aborted )
@@ -139,6 +191,7 @@ private:
 	std::vector< char > read_buffer_;
 	std::vector< char > write_buffer_;
 	const request_handler& request_handler_;
+	detail::raii_observer_holder< observer > observer_;
 	protocol::reply reply_;
 };
 
