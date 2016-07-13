@@ -1,7 +1,7 @@
 LIB_DIR=/usr/local/lib
 OPT=-Wall -ggdb -pipe -L$(LIB_DIR)
 ROOT=..
-INCLUDE=-I$(ROOT)/client -I$(ROOT)/common_protocol -I$(ROOT)/program_options
+INCLUDE=-I$(ROOT)/client -I$(ROOT)/common_protocol -I$(ROOT)/common_sources -I$(ROOT)/program_options
 CC=g++ $(INCLUDE)
 
 all: main.cpp

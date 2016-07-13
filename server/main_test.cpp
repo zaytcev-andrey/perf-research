@@ -1,5 +1,6 @@
 #include "variable_record_header.h"
 #include "variable_record.h"
+#include "common_file_logic.h"
 #include "file_logic.h"
 #include "file_provider.h"
 #include "request_handler.h"
@@ -244,10 +245,10 @@ TEST_F( filelogic_test, make_file_with_content_test )
 	EXPECT_EQ( item_count, item_count_for_check );
 }
 
-TEST_F( filelogic_test, generate_file_name )
+TEST_F( filelogic_test, generate_file_name_test )
 {
 	namespace fs = boost::filesystem;
-	using namespace perf::filelogic::detail;
+	using namespace perf::filelogic;
 
 	const fs::path file_name_f =
 			generate_file_name( test_directory_ );
@@ -347,6 +348,16 @@ TEST_F( filelogic_test, file_provider_test )
 	file /= info.file_name;
 	EXPECT_TRUE( fs::exists( file ) );
 	EXPECT_EQ( info.disk_file_size, fs::file_size( file ) );
+
+	std::istream& stream = *info.stream;
+	stream >> std::noskipws;
+	std::istream_iterator< char > begin( stream );
+	std::istream_iterator< char > end;
+
+	std::vector< char > file_data;
+	file_data.reserve( info.disk_file_size );
+	std::copy( begin, end, std::back_inserter( file_data ) );
+	EXPECT_FALSE( file_data.empty() );
 }
 
 class fake_file_provider

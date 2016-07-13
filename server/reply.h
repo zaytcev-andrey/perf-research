@@ -16,7 +16,7 @@ struct reply
 	reply_header header;
 	std::vector< char > file_data;
 
-	std::vector<boost::asio::const_buffer> get_buffers() const
+	std::vector< boost::asio::const_buffer > get_buffers() const
 	{
 		std::vector< boost::asio::const_buffer > buffers;
 
@@ -34,6 +34,7 @@ struct reply
 
 private:
 	mutable variable_record var_rec_;
+	mutable std::vector< char > buff;
 };
 
 }

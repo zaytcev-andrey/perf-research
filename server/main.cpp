@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 
 #include "program_options.h"
+#include "common_file_logic.h"
 #include "file_logic.h"
 #include "server.h"
 
@@ -18,6 +19,7 @@ try
 		, options.get_port() );
 
 	const boost::filesystem::path file_working_dir( "/home/zaytcevandrey/perf-server-test-dir" );
+	perf::filelogic::raii_directory_holder holdfer( file_working_dir );
 
 	{
 		const size_t file_size = 1024;
@@ -26,7 +28,7 @@ try
 
 		perf::filelogic::file_generator file_generator( file_working_dir );
 		file_generator.clean_all_files();
-		file_generator.generate_files( file_content, file_count, file_count );
+		file_generator.generate_files( file_content, file_size, file_count );
 	}
 
 	perf::server server( endpoint, file_working_dir );

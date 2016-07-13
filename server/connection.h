@@ -96,7 +96,7 @@ private:
 		{
 			request_handler_.make_reply( request, reply_ );
 
-			do_write();
+			do_write_reply();
 		}
 		else
 		{
@@ -105,17 +105,17 @@ private:
 		}
 	}
 
-	void do_write()
+	void do_write_reply()
 	{
 		async_write(
 			connected_socket_
-			, boost::asio::buffer( reply_.get_buffers() )
+			, reply_.get_buffers()
 			, boost::bind(
-				&connection::handle_write, this->shared_from_this()
+				&connection::handle_write_reply, this->shared_from_this()
 				, boost::asio::placeholders::error ) );
 	}
 
-	void handle_write( const boost::system::error_code& err )
+	void handle_write_reply( const boost::system::error_code& err )
 	{
 		if ( !err )
 		{
@@ -126,8 +126,7 @@ private:
 				, non_err_code );*/
 			do_read();
 		}
-
-		if ( err != boost::asio::error::operation_aborted )
+		else if ( err != boost::asio::error::operation_aborted )
 		{
 			stop();
 		}

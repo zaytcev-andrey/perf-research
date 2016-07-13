@@ -22,7 +22,7 @@ namespace detail
 {
 	struct file_entry
 	{
-		std::string file_name;
+		boost::filesystem::path file_path;
 		size_t disk_file_size;
 	};
 }
@@ -57,7 +57,7 @@ public:
 		for ( fs::directory_iterator it( file_dir_path_ ); it != end; ++it )
 		{
 		    const fs::path& file_path = it->path();
-		    item.file_name = file_path.filename().string();
+		    item.file_path = file_path;
 		    item.disk_file_size = fs::file_size( file_path );
 			files_.push_back( item );
 		}
@@ -73,9 +73,9 @@ public:
 
 		file_entry item = files_[ idx ];
 		file_stream_info info = {
-			item.file_name
+			item.file_path.filename().string()
 			, item.disk_file_size
-			, boost::shared_ptr< std::istream >( new std::ifstream( item.file_name.c_str() ) ) };
+			, boost::shared_ptr< std::istream >( new std::ifstream( item.file_path.string().c_str() ) ) };
 
 		return info;
 	}

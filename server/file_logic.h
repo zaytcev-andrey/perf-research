@@ -1,12 +1,7 @@
-/*
- * file_logic.h
- *
- *  Created on: May 11, 2016
- *      Author: zaytcevandrey
- */
-
 #ifndef SERVER_FILE_LOGIC_H_
 #define SERVER_FILE_LOGIC_H_
+
+#include "common_file_logic.h"
 
 #include <math.h>
 #include <fstream>
@@ -22,57 +17,6 @@ namespace perf
 {
 namespace filelogic
 {
-namespace detail
-{
-
-inline void make_file_with_content(
-	const std::string& file_name
-	, const std::string& file_text_item
-	, size_t item_count )
-{
-	std::ofstream file( file_name.c_str() );
-
-	for ( size_t idx = 0; idx < item_count; ++idx )
-	{
-		file << file_text_item;
-
-		if ( idx + 1 < item_count )
-		{
-			file << "\n";
-		}
-	}
-}
-
-inline boost::filesystem::path generate_file_name(
-	const boost::filesystem::path base_path )
-{
-	namespace fs = boost::filesystem;
-
-	const fs::path file = fs::unique_path();
-	fs::path new_file_path = base_path;
-	new_file_path /= file.filename();
-
-	return new_file_path;
-}
-
-inline size_t calc_file_string_count(
-	size_t file_size
-	, size_t file_text_length )
-{
-	const size_t text_string_count =
-		size_t( ceil( double( file_size ) / file_text_length ) );
-
-	return text_string_count;
-}
-
-inline size_t calc_file_string_count(
-	size_t file_size
-	, const std::string& file_text )
-{
-	return calc_file_string_count( file_size, file_text.length() );
-}
-
-}
 
 struct file_stream_info
 {
@@ -154,7 +98,7 @@ private:
 		while ( count-- )
 		{
 			const std::string file_name(
-				detail::generate_file_name( file_dir_path_ ).string() );
+				generate_file_name( file_dir_path_ ).string() );
 
 			detail::make_file_with_content(
 				file_name
