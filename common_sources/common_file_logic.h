@@ -5,6 +5,8 @@
 #include <fstream>
 #include <vector>
 
+#include <stdlib.h>
+
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/future.hpp>
@@ -55,6 +57,11 @@ inline size_t calc_file_string_count(
 
 }
 
+inline boost::filesystem::path get_home_dir()
+{
+	return getenv( "HOME" );
+}
+
 inline boost::filesystem::path generate_file_name(
 	const boost::filesystem::path base_path )
 {
@@ -92,23 +99,70 @@ inline void clean_all_files_in_dir( const boost::filesystem::path& file_dir_path
 	}
 }
 
+class create_and_delete
+{
+public:
+	void create_directory( const boost::filesystem::path& dir )
+	{
+		boost::filesystem::create_directory( dir );
+	}
+
+	void remove_directory( const boost::filesystem::path& dir )
+	{
+		boost::system::error_code no_error;
+		boost::filesystem::remove_all( dir, no_error );
+	}
+};
+
+class no_delete_if_existing
+{
+public:
+
+	no_delete_if_existing()
+		: dir_created_()
+	{
+	}
+
+	void create_directory( const boost::filesystem::path& dir )
+	{
+		if ( !boost::filesystem::exists( dir ) )
+		{
+			dir_created_ = true;
+			boost::filesystem::create_directory( dir );
+		}
+	}
+
+	void remove_directory( const boost::filesystem::path& dir )
+	{
+		if ( dir_created_ )
+		{
+			boost::system::error_code no_error;
+			boost::filesystem::remove_all( dir, no_error );
+		}
+	}
+private:
+	bool dir_created_;
+};
+
+template< class holder_strategy = create_and_delete >
 class raii_directory_holder
 {
 public:
 	explicit raii_directory_holder( const boost::filesystem::path& dir )
 		: dir_( dir )
+		, holder_strategy_()
 	{
-		boost::filesystem::create_directory( dir_ );
+		holder_strategy_.create_directory( dir_ );
 	}
 
 	~raii_directory_holder()
 	{
-		boost::system::error_code no_error;
-		boost::filesystem::remove_all( dir_, no_error );
+		holder_strategy_.remove_directory( dir_ );
 	}
 
 private:
 	boost::filesystem::path dir_;
+	holder_strategy holder_strategy_;
 };
 
 }

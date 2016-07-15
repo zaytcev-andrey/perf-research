@@ -11,8 +11,17 @@
 int main( int argc, char* argv[] )
 try
 {
-	const boost::filesystem::path file_working_dir( "/home/zaytcevandrey/perf-client-test-dir" );
-	perf::filelogic::raii_directory_holder holdfer( file_working_dir );
+	namespace fs = boost::filesystem;
+	using namespace perf;
+	using namespace perf::filelogic;
+
+	const std::string client_base_dir_name( "perf-client-test-dir" );
+	fs::path client_base_path = get_home_dir();
+	client_base_path /= client_base_dir_name;
+	raii_directory_holder< no_delete_if_existing > holder_client_base_dir( client_base_path );
+
+	fs::path file_working_dir = generate_file_name( client_base_path );
+	raii_directory_holder<> file_dir_holder( file_working_dir );
 
 	perf::program_options options( argc, argv );
 

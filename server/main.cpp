@@ -19,7 +19,7 @@ try
 		, options.get_port() );
 
 	const boost::filesystem::path file_working_dir( "/home/zaytcevandrey/perf-server-test-dir" );
-	perf::filelogic::raii_directory_holder holdfer( file_working_dir );
+	perf::filelogic::raii_directory_holder<> holdfer( file_working_dir );
 
 	{
 		const size_t file_size = 1024;
