@@ -12,6 +12,7 @@ all: main.cpp
 	-lboost_thread \
 	-lboost_random \
 	-lboost_program_options \
+	-lboost_chrono \
 	-o perf-server.exe
 	
 tests: main_test.cpp

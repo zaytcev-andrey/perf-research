@@ -6,6 +6,7 @@
 #include "request_handler.h"
 
 #include <iostream>
+#include <limits.h>
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -15,6 +16,7 @@
 #include <boost/thread/future.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/atomic.hpp>
+#include <boost/chrono/include.hpp>
 
 namespace perf
 {
@@ -83,12 +85,14 @@ public:
 		std::cout << "checkin" << std::endl;
 
 		const int cntr = connection_counter_.load();
+		++connection_counter_;
+
 		if ( !cntr )
 		{
 			// handle first connection
+			start_ = boost::chrono::steady_clock::now();
 		}
 
-		++connection_counter_;
 	}
 
 	void checkout()
@@ -101,7 +105,7 @@ public:
 		if ( !cntr )
 		{
 			// handle last connection
-
+			stop_ = boost::chrono::steady_clock::now();
 			handle_stop();
 		}
 	}
@@ -146,9 +150,18 @@ private:
 	void handle_stop()
 	{
 		std::cout << "server stopped" << std::endl;
-		std::cout << "sent " << sent_data_ / 1024  << " bytes" << " : " << sent_data_ / ( 1024 * 1024 ) << " MB" << std::endl;
-
 		io_service_.stop();
+
+		const size_t sent_data_b = sent_data_.load();
+		const size_t sent_data_mb = sent_data_b / ( 1024 * 1024 );
+
+		std::cout << "sent " << sent_data_b << " bytes" << " : " << sent_data_mb << " MB" << std::endl;
+
+		const boost::chrono::duration<double> interval_sec = stop_ - start_;
+		const size_t sent_data_mb_per_s = sent_data_mb / interval_sec.count();
+		const size_t sent_data_mbint_per_s = sent_data_mb_per_s * std::numeric_limits< char >::digits;
+
+		std::cout << "transfer rate " << sent_data_mbint_per_s << " Mbit/s" << " : " << sent_data_mb_per_s << " MB/s" << std::endl;
 	}
 
 private:
@@ -161,6 +174,8 @@ private:
 	protocol::request_handler< filelogic::file_provider > request_handler_;
 	boost::atomic< int > connection_counter_;
 	boost::atomic< int > sent_data_;
+	boost::chrono::steady_clock::time_point start_;
+	boost::chrono::steady_clock::time_point stop_;
 };
 
 }
