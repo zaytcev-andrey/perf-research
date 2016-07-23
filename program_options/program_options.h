@@ -66,20 +66,18 @@ public:
 
 	void insert( po::options_description& desc )
 	{
-		desc.add_options()
-			( get_name().c_str(), get_description().c_str() );
+		insert_impl( desc );
 	}
 
-	void process( int argc, char* argv[], const po::options_description& desc )
+	void process( int argc, char* argv[], po::options_description& desc )
 	{
 		process_impl( argc, argv, desc );
 	}
 
 private:
 
-	virtual std::string get_name() const = 0;
-	virtual std::string get_description() const = 0;
-	virtual void process_impl( int argc, char* argv[], const po::options_description& desc ) = 0;
+	virtual void process_impl( int argc, char* argv[], po::options_description& desc ) = 0;
+	virtual void insert_impl( po::options_description& desc ) = 0;
 };
 
 po::options_description& operator<<( po::options_description& desc, i_po_item& item )
@@ -100,17 +98,13 @@ public:
 
 private:
 
-	std::string get_name() const
+	virtual void insert_impl( po::options_description& desc )
 	{
-		return name_;
+		desc.add_options()
+		    ( name_.c_str(), "produce help message" );
 	}
 
-	std::string get_description() const
-	{
-		return "produce help message";
-	}
-
-	void process_impl( int argc, char* argv[], const po::options_description& desc )
+	void process_impl( int argc, char* argv[], po::options_description& desc )
 	{
 		po::variables_map vm = detail::get_variables_map( argc, argv, desc );
 
@@ -133,7 +127,6 @@ class po_host_server : public i_po_item
 public:
 
 	po_host_server( const std::string& ip = "any" )
-		: names_( "host,h" )
 	{
 		ip_address_ = ip != "any" ?
 			boost::asio::ip::address::from_string( ip )
@@ -147,17 +140,13 @@ public:
 
 private:
 
-	std::string get_name() const
+	void insert_impl( po::options_description& desc )
 	{
-		return names_;
+		desc.add_options()
+			( "host,h", po::value< std::string >(), "set listening ip address" );
 	}
 
-	std::string get_description() const
-	{
-		return "set listening ip address";
-	}
-
-	void process_impl( int argc, char* argv[], const po::options_description& desc )
+	void process_impl( int argc, char* argv[], po::options_description& desc )
 	{
 		po::variables_map vm = detail::get_variables_map( argc, argv, desc );
 
@@ -170,7 +159,6 @@ private:
 
 private:
 
-	const std::string names_;
 	boost::asio::ip::address ip_address_;
 };
 
@@ -179,7 +167,6 @@ class po_host_client : public i_po_item
 public:
 
 	po_host_client( const std::string& ip = "127.0.0.1" )
-		: names_( "host,h" )
 	{
 		ip_address_ = boost::asio::ip::address::from_string( ip );
 	}
@@ -191,17 +178,13 @@ public:
 
 private:
 
-	std::string get_name() const
+	void insert_impl( po::options_description& desc )
 	{
-		return names_;
+		desc.add_options()
+			( "host,h", po::value< std::string >(), "set remote ip address" );
 	}
 
-	std::string get_description() const
-	{
-		return "set remote ip address";
-	}
-
-	void process_impl( int argc, char* argv[], const po::options_description& desc )
+	void process_impl( int argc, char* argv[], po::options_description& desc )
 	{
 		po::variables_map vm = detail::get_variables_map( argc, argv, desc );
 
@@ -214,7 +197,6 @@ private:
 
 private:
 
-	const std::string names_;
 	boost::asio::ip::address ip_address_;
 };
 
@@ -243,17 +225,13 @@ protected:
 
 private:
 
-	std::string get_name() const
+	void insert_impl( po::options_description& desc )
 	{
-		return names_;
+		desc.add_options()
+			( names_.c_str(), po::value< unsigned short >(), description_.c_str() );
 	}
 
-	std::string get_description() const
-	{
-		return description_;
-	}
-
-	void process_impl( int argc, char* argv[], const po::options_description& desc )
+	void process_impl( int argc, char* argv[], po::options_description& desc )
 	{
 		po::variables_map vm = detail::get_variables_map( argc, argv, desc );
 
@@ -297,9 +275,7 @@ class po_file_count : public i_po_item
 public:
 
 	po_file_count( size_t files_count )
-		: names_( "files,f" )
-		, description_( "number of files to receive" )
-		, files_count_( files_count )
+		: files_count_( files_count )
 	{
 	}
 
@@ -310,30 +286,28 @@ public:
 
 private:
 
-	std::string get_name() const
+	void insert_impl( po::options_description& desc )
 	{
-		return names_;
+		desc.add_options()
+			( "files,f", po::value< size_t >(), "number of files to receive" );
 	}
 
-	std::string get_description() const
+	void process_impl( int argc, char* argv[], po::options_description& desc )
 	{
-		return description_;
-	}
+		//po::variables_map vm = detail::get_variables_map( argc, argv, desc );
 
-	void process_impl( int argc, char* argv[], const po::options_description& desc )
-	{
-		po::variables_map vm = detail::get_variables_map( argc, argv, desc );
+		po::variables_map vm;
+		po::store( po::parse_command_line( argc, argv, desc ), vm );
+		po::notify( vm );
 
 		if ( vm.count( "files" ) )
 		{
-			files_count_ = vm[ "files" ].as< unsigned short >();
+			files_count_ = vm[ "files" ].as< size_t >();
 		}
 	}
 
 private:
 
-	const std::string names_;
-	const std::string description_;
 	size_t files_count_;
 };
 

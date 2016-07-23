@@ -15,7 +15,7 @@ public:
 		, char* argv[]
 		, const std::string& ip_address = "127.0.0.1"
 		, unsigned short port = 12345
-		, size_t file_count_to_receive = 100 )
+		, size_t file_count_to_receive = 1000 )
 		: help_()
 		, host_( ip_address )
 		, port_( port )
