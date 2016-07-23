@@ -4,7 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
 
-#include "program_options.h"
+#include "server_program_options.h"
 #include "common_file_logic.h"
 #include "file_logic.h"
 #include "server.h"
@@ -12,7 +12,7 @@
 int main( int argc, char* argv[] )
 try
 {
-	perf::program_options options( argc, argv );
+	perf::server_program_options options( argc, argv );
 
 	boost::asio::ip::tcp::endpoint endpoint(
 		options.get_ip_appdress()
@@ -36,7 +36,7 @@ try
 
 	return 0;
 }
-catch( perf::program_options::program_options_help& e )
+catch( perf::program_options_help& e )
 {
 	std::cout << e.what() << std::endl;
 

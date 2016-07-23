@@ -5,7 +5,7 @@
 #include <boost/filesystem.hpp>
 
 #include "common_file_logic.h"
-#include "program_options.h"
+#include "client_program_options.h"
 #include "client.h"
 
 int main( int argc, char* argv[] )
@@ -23,18 +23,18 @@ try
 	fs::path file_working_dir = generate_file_name( client_base_path );
 	raii_directory_holder<> file_dir_holder( file_working_dir );
 
-	perf::program_options options( argc, argv );
+	perf::client_program_options options( argc, argv );
 
 	boost::asio::ip::tcp::endpoint endpoint(
 		options.get_ip_appdress()
 		, options.get_port() );
 
-	perf::client client( endpoint, file_working_dir );
+	perf::client client( endpoint, file_working_dir, options.get_files_count_to_receive() );
 	client.run();
 
 	return 0;
 }
-catch( perf::program_options::program_options_help& e )
+catch( perf::program_options_help& e )
 {
 	std::cout << e.what() << std::endl;
 

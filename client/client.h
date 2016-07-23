@@ -22,9 +22,11 @@ public:
 	client(
 		const boost::asio::ip::tcp::endpoint& endpoint
 		, const boost::filesystem::path& file_dir
+		, size_t files_count_to_receive
 		, unsigned int threads_count = /*boost::thread::hardware_concurrency() * 2*/1)
 		: io_service_()
 		, file_dir_( file_dir )
+		, files_count_to_receive_( files_count_to_receive )
 		, signals_( io_service_ )
 		, threads_count_( threads_count )
 	{
@@ -54,7 +56,11 @@ private:
 	{
 		std::cout << "start connect to server" << std::endl;
 
-		connection::ptr new_connection( new connection( io_service_, file_dir_ ) );
+		connection::ptr new_connection(
+			new connection(
+				io_service_
+				, file_dir_
+				, files_count_to_receive_ ) );
 
 		new_connection->start( endpoint );
 	}
@@ -67,6 +73,7 @@ private:
 private:
 	boost::asio::io_service io_service_;
 	boost::filesystem::path file_dir_;
+	size_t files_count_to_receive_;
 	boost::asio::signal_set signals_;
 	unsigned int threads_count_;
 	boost::thread_group threads_;

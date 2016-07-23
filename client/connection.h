@@ -41,9 +41,12 @@ public:
 
 public:
 	connection( boost::asio::io_service& io_service
-		, const boost::filesystem::path& file_dir )
+		, const boost::filesystem::path& file_dir
+		, size_t files_count_to_receive )
 		: socket_( io_service )
 		, file_dir_( file_dir )
+		, files_count_to_receive_( files_count_to_receive )
+		, received_files_count_()
 		, buffer_( buffer_length )
 	{
 		log( "connection constructed" );
@@ -198,7 +201,16 @@ private:
 		}
 
 		save_file();
-		do_request_write();
+
+		received_files_count_++;
+		if ( received_files_count_ >= files_count_to_receive_ )
+		{
+			stop();
+		}
+		else
+		{
+			do_request_write();
+		}
 	}
 
 	void save_file()
@@ -215,6 +227,8 @@ private:
 	enum { buffer_length = 8192 };
 	boost::asio::ip::tcp::socket socket_;
 	boost::filesystem::path file_dir_;
+	const size_t files_count_to_receive_;
+	size_t received_files_count_;
 	protocol::variable_record variable_record_;
 	protocol::reply_header reply_header_;
 	std::vector< char > buffer_;
