@@ -75,6 +75,8 @@ public:
 
 		socket_.close();
 		log( "connection stopped" );
+
+		socket_.get_io_service().stop();
 	}
 
 private:
@@ -88,6 +90,7 @@ private:
 		else
 		{
 			log_error( "can not connect", err );
+			stop();
 		}
 	}
 
@@ -206,6 +209,8 @@ private:
 		if ( received_files_count_ >= files_count_to_receive_ )
 		{
 			stop();
+
+			std::cout << received_files_count_ << " files have been received" << std::endl;
 		}
 		else
 		{

@@ -84,8 +84,7 @@ public:
 	{
 		std::cout << "checkin" << std::endl;
 
-		const int cntr = connection_counter_.load();
-		++connection_counter_;
+		const int cntr = connection_counter_.fetch_add( 1 );
 
 		if ( !cntr )
 		{
@@ -99,10 +98,7 @@ public:
 	{
 		std::cout << "checkout" << std::endl;
 
-		--connection_counter_;
-
-		const int cntr = connection_counter_.load();
-		if ( !cntr )
+		if ( connection_counter_.fetch_sub( 1 ) == 1 )
 		{
 			// handle last connection
 			stop_ = boost::chrono::steady_clock::now();
@@ -152,16 +148,21 @@ private:
 		std::cout << "server stopped" << std::endl;
 		io_service_.stop();
 
-		const size_t sent_data_b = sent_data_.load();
-		const size_t sent_data_mb = sent_data_b / ( 1024 * 1024 );
+		const boost::uint64_t bytes_in_mb = 1024 * 1024;
+		const boost::uint64_t sent_data_b = sent_data_.load();
+		const boost::uint64_t sent_data_bits = sent_data_b * std::numeric_limits< char >::digits;
+		const double sent_data_mb = double( sent_data_b ) / bytes_in_mb;
 
-		std::cout << "sent " << sent_data_b << " bytes" << " : " << sent_data_mb << " MB" << std::endl;
+		std::cout << "sent " << sent_data_b << " bytes" <<
+			" : " << sent_data_mb << " MB" << std::endl;
 
 		const boost::chrono::duration<double> interval_sec = stop_ - start_;
-		const size_t sent_data_mb_per_s = sent_data_mb / interval_sec.count();
-		const size_t sent_data_mbint_per_s = sent_data_mb_per_s * std::numeric_limits< char >::digits;
+		const double sent_data_mb_per_s = sent_data_mb / interval_sec.count();
+		const double sent_data_mbit_per_s = double( sent_data_bits ) / ( bytes_in_mb * interval_sec.count() );
 
-		std::cout << "transfer rate " << sent_data_mbint_per_s << " Mbit/s" << " : " << sent_data_mb_per_s << " MB/s" << std::endl;
+		std::cout << "transfer rate " <<
+			sent_data_mbit_per_s << " Mbit/s" <<
+			" : " << sent_data_mb_per_s << " MB/s" << std::endl;
 	}
 
 private:
@@ -173,7 +174,7 @@ private:
 	filelogic::file_provider file_provider_;
 	protocol::request_handler< filelogic::file_provider > request_handler_;
 	boost::atomic< int > connection_counter_;
-	boost::atomic< int > sent_data_;
+	boost::atomic< boost::uint64_t > sent_data_;
 	boost::chrono::steady_clock::time_point start_;
 	boost::chrono::steady_clock::time_point stop_;
 };
