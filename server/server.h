@@ -153,14 +153,19 @@ private:
 		const boost::uint64_t sent_data_bits = sent_data_b * std::numeric_limits< char >::digits;
 		const double sent_data_mb = double( sent_data_b ) / bytes_in_mb;
 
-		std::cout << "sent " << sent_data_b << " bytes" <<
-			" : " << sent_data_mb << " MB" << std::endl;
+		std::cout << "Sent " << sent_data_b << " bytes" <<
+			" : " << sent_data_mb << " MB. " << std::endl;
 
-		const boost::chrono::duration<double> interval_sec = stop_ - start_;
+		const boost::chrono::duration< double > interval_sec = stop_ - start_;
+		const boost::chrono::duration< double, boost::ratio< 60l > > interval_min( interval_sec );
+
+		std::cout << "Used time: " << interval_sec << " : " <<
+			interval_min << std::endl;
+
 		const double sent_data_mb_per_s = sent_data_mb / interval_sec.count();
 		const double sent_data_mbit_per_s = double( sent_data_bits ) / ( bytes_in_mb * interval_sec.count() );
 
-		std::cout << "transfer rate " <<
+		std::cout << "Transfer rate " <<
 			sent_data_mbit_per_s << " Mbit/s" <<
 			" : " << sent_data_mb_per_s << " MB/s" << std::endl;
 	}
