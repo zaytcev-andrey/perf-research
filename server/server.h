@@ -32,7 +32,7 @@ public:
 	server(
 		const boost::asio::ip::tcp::endpoint& endpoint
 		, const boost::filesystem::path& file_dir
-		, unsigned int threads_count = /*boost::thread::hardware_concurrency() * 2*/1)
+		, unsigned int threads_count )
 		: io_service_()
 		, acceptor_( io_service_ )
 		, threads_count_( threads_count )

@@ -54,7 +54,7 @@ private:
 	po_help help_;
 	po_host_client host_;
 	po_port_client port_;
-	po_file_count file_count_to_receive_;
+	po_receiver_file_count file_count_to_receive_;
 };
 
 }

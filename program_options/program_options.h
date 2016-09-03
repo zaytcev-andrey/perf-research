@@ -252,7 +252,7 @@ class po_port_server : public po_port
 {
 public:
 
-	po_port_server( unsigned short port = 12345 )
+	explicit po_port_server( unsigned short port = 12345 )
 		: po_port( "set listening port", port )
 	{
 	}
@@ -263,18 +263,18 @@ class po_port_client : public po_port
 {
 public:
 
-	po_port_client( unsigned short port = 12345 )
+	explicit po_port_client( unsigned short port = 12345 )
 		: po_port( "set remote port", port )
 	{
 	}
 
 };
 
-class po_file_count : public i_po_item
+class po_receiver_file_count : public i_po_item
 {
 public:
 
-	po_file_count( size_t files_count )
+	explicit po_receiver_file_count( size_t files_count )
 		: files_count_( files_count )
 	{
 	}
@@ -294,8 +294,6 @@ private:
 
 	void process_impl( int argc, char* argv[], po::options_description& desc )
 	{
-		//po::variables_map vm = detail::get_variables_map( argc, argv, desc );
-
 		po::variables_map vm;
 		po::store( po::parse_command_line( argc, argv, desc ), vm );
 		po::notify( vm );
@@ -309,6 +307,123 @@ private:
 private:
 
 	size_t files_count_;
+};
+
+class po_server_files_count : public i_po_item
+{
+public:
+
+	explicit po_server_files_count( size_t files_count )
+		: files_count_( files_count )
+	{
+	}
+
+	size_t get_files_count() const
+	{
+		return files_count_;
+	}
+
+private:
+
+	void insert_impl( po::options_description& desc )
+	{
+		desc.add_options()
+			( "files,f", po::value< size_t >(), "number of server files" );
+	}
+
+	void process_impl( int argc, char* argv[], po::options_description& desc )
+	{
+		po::variables_map vm;
+		po::store( po::parse_command_line( argc, argv, desc ), vm );
+		po::notify( vm );
+
+		if ( vm.count( "files" ) )
+		{
+			files_count_ = vm[ "files" ].as< size_t >();
+		}
+	}
+
+private:
+
+	size_t files_count_;
+};
+
+class po_file_size : public i_po_item
+{
+public:
+
+	explicit po_file_size( size_t files_size )
+		: files_size_( files_size )
+	{
+	}
+
+	size_t get_file_size() const
+	{
+		return files_size_;
+	}
+
+private:
+
+	void insert_impl( po::options_description& desc )
+	{
+		desc.add_options()
+			( "size_file,s", po::value< size_t >(), "file size in bytes" );
+	}
+
+	void process_impl( int argc, char* argv[], po::options_description& desc )
+	{
+		po::variables_map vm;
+		po::store( po::parse_command_line( argc, argv, desc ), vm );
+		po::notify( vm );
+
+		if ( vm.count( "files" ) )
+		{
+			files_size_ = vm[ "size_file" ].as< size_t >();
+		}
+	}
+
+private:
+
+	size_t files_size_;
+};
+
+class po_threads_count : public i_po_item
+{
+public:
+
+	explicit po_threads_count( size_t threads_count )
+		: threads_count_( threads_count )
+	{
+	}
+
+	size_t get_threads_size() const
+	{
+		return threads_count_;
+	}
+
+private:
+
+	void insert_impl( po::options_description& desc )
+	{
+		desc.add_options()
+			( "threads_count,t", po::value< size_t >(), "threads count" );
+	}
+
+	void process_impl( int argc, char* argv[], po::options_description& desc )
+	{
+		po::variables_map vm;
+		po::store( po::parse_command_line( argc, argv, desc ), vm );
+		po::notify( vm );
+
+		if ( vm.count( "files" ) )
+		{
+			threads_count_ = vm[ "threads_count" ].as< size_t >();
+		}
+	}
+
+private:
+
+	size_t threads_count_;
 };
 
 }

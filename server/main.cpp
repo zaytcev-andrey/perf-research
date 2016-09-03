@@ -22,8 +22,8 @@ try
 	perf::filelogic::raii_directory_holder<> holdfer( file_working_dir );
 
 	{
-		const size_t file_size = 1024;
-		const size_t file_count = 128;
+		const size_t file_size = options.get_file_size();
+		const size_t file_count = options.get_files_count();
 		const std::string file_content( "test string" );
 
 		perf::filelogic::file_generator file_generator( file_working_dir );
@@ -31,7 +31,8 @@ try
 		file_generator.generate_files( file_content, file_size, file_count );
 	}
 
-	perf::server server( endpoint, file_working_dir );
+	const size_t threads_count = options.get_threads_count();
+	perf::server server( endpoint, file_working_dir, threads_count );
 	server.run();
 
 	return 0;
