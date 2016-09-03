@@ -376,7 +376,7 @@ private:
 		po::store( po::parse_command_line( argc, argv, desc ), vm );
 		po::notify( vm );
 
-		if ( vm.count( "files" ) )
+		if ( vm.count( "size_file" ) )
 		{
 			files_size_ = vm[ "size_file" ].as< size_t >();
 		}
@@ -415,7 +415,7 @@ private:
 		po::store( po::parse_command_line( argc, argv, desc ), vm );
 		po::notify( vm );
 
-		if ( vm.count( "files" ) )
+		if ( vm.count( "threads_count" ) )
 		{
 			threads_count_ = vm[ "threads_count" ].as< size_t >();
 		}
